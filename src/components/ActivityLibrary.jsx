@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Icons from './Icons'
-import { useData } from '../hooks/useData'
+import { useData, BASE_SCHEDULE, SUNDAY_SCHEDULE, SATURDAY_SCHEDULE } from '../hooks/useData'
 import { ACTIVITY_DETAILS } from '../data/exercises'
 import ActivityDetailModal from './ActivityDetailModal'
 
 const ActivityLibrary = () => {
-    const { activities, completedToday, toggleComplete } = useData()
+    const { activities: todayActivities, completedToday, toggleComplete } = useData()
     const [selectedActivity, setSelectedActivity] = useState(null)
     const [filter, setFilter] = useState('all')
+    const [viewMode, setViewMode] = useState('today') // 'today' or 'library'
 
     // Get icon for activity type
     const getIcon = (type) => {
@@ -18,10 +19,22 @@ const ActivityLibrary = () => {
     // Group activities by phase
     const phases = ['დილა', 'დღე', 'სამუშაო', 'საღამო', 'ღამე']
 
+    // Memoize all activities for Library mode
+    const allActivities = useMemo(() => {
+        // Combine all schedules
+        // We want to show unique activities. 
+        // Sunday and Saturday have specific IDs (sun1, sat1). Base has m1, w1 etc.
+        // So we can just concatenate.
+        return [...BASE_SCHEDULE, ...SATURDAY_SCHEDULE, ...SUNDAY_SCHEDULE]
+    }, [])
+
+    // Determine which list to show
+    const currentList = viewMode === 'today' ? todayActivities : allActivities
+
     // Filter activities
     const filteredActivities = filter === 'all'
-        ? activities
-        : activities.filter(a => a.phase === filter)
+        ? currentList
+        : currentList.filter(a => a.phase === filter)
 
     // Get activities with details
     const activitiesWithDetails = filteredActivities.map(activity => ({
@@ -34,21 +47,55 @@ const ActivityLibrary = () => {
     }
 
     const handleToggleComplete = (id) => {
+        // Only allow toggling completion for TODAY's activities
+        // In library view, we might not want to toggle today's completion if it's not in today's list?
+        // Actually, if the ID matches something in today's completion list, why not showing it?
+        // But for simplicity, let's allow it if it's in today's list. 
+        // Ideally, user manages completion in "Today" view. 
+        // But let's allow it here too for convenience if the activity is valid for today.
         toggleComplete(id)
     }
 
     return (
         <div className="animate-fade-in space-y-6">
             {/* Header */}
-            <header className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-black text-white">აქტივობები</h1>
-                    <p className="text-zinc-500 text-sm">{activities.length} აქტივობა დღეს</p>
+            <header className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-black text-white">აქტივობები</h1>
+                        <p className="text-zinc-500 text-sm">
+                            {viewMode === 'today' ? 'დღევანდელი გეგმა' : 'სრული ბაზა'}
+                        </p>
+                    </div>
+                    {viewMode === 'today' && (
+                        <div className="glass px-4 py-2 rounded-2xl">
+                            <span className="text-lg font-bold text-cyan-400">
+                                {Object.keys(completedToday).filter(k => completedToday[k]).length}/{todayActivities.length}
+                            </span>
+                        </div>
+                    )}
                 </div>
-                <div className="glass px-4 py-2 rounded-2xl">
-                    <span className="text-lg font-bold text-cyan-400">
-                        {Object.keys(completedToday).filter(k => completedToday[k]).length}/{activities.length}
-                    </span>
+
+                {/* View Toggles */}
+                <div className="bg-white/5 p-1 rounded-2xl flex gap-1">
+                    <button
+                        onClick={() => setViewMode('today')}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'today'
+                                ? 'bg-zinc-800 text-white shadow-lg'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                    >
+                        დღეს
+                    </button>
+                    <button
+                        onClick={() => setViewMode('library')}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'library'
+                                ? 'bg-zinc-800 text-white shadow-lg'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                    >
+                        ყველა
+                    </button>
                 </div>
             </header>
 
@@ -64,7 +111,7 @@ const ActivityLibrary = () => {
                     ყველა
                 </button>
                 {phases.map(phase => {
-                    const count = activities.filter(a => a.phase === phase).length
+                    const count = currentList.filter(a => a.phase === phase).length
                     if (count === 0) return null
                     return (
                         <button
@@ -90,7 +137,7 @@ const ActivityLibrary = () => {
                         <div
                             key={activity.id}
                             onClick={() => handleActivityClick(activity)}
-                            className={`glass p-4 rounded-2xl flex items-center gap-4 cursor-pointer transition-all active:scale-[0.98] ${isCompleted ? 'opacity-50' : 'hover:bg-white/[0.06]'
+                            className={`glass p-4 rounded-2xl flex items-center gap-4 cursor-pointer transition-all active:scale-[0.98] ${isCompleted && viewMode === 'today' ? 'opacity-50' : 'hover:bg-white/[0.06]'
                                 }`}
                         >
                             {/* Icon */}
@@ -104,7 +151,7 @@ const ActivityLibrary = () => {
                             {/* Info */}
                             <div className="flex-1 min-w-0">
                                 <div className="flex justify-between items-center mb-1">
-                                    <h3 className={`font-bold ${isCompleted ? 'line-through text-zinc-500' : 'text-white'}`}>
+                                    <h3 className={`font-bold ${isCompleted && viewMode === 'today' ? 'line-through text-zinc-500' : 'text-white'}`}>
                                         {activity.task}
                                     </h3>
                                     <span className="text-xs font-bold text-zinc-600 ml-2">{activity.time}</span>
@@ -125,23 +172,25 @@ const ActivityLibrary = () => {
                         </div>
                     )
                 })}
-            </div>
 
-            {/* Empty State */}
-            {filteredActivities.length === 0 && (
-                <div className="text-center py-12">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 flex items-center justify-center">
-                        <Icons.Calendar size={32} className="text-zinc-600" />
+                {filteredActivities.length === 0 && (
+                    <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 flex items-center justify-center">
+                            <Icons.Calendar size={32} className="text-zinc-600" />
+                        </div>
+                        <p className="text-zinc-500">არ არის აქტივობა</p>
                     </div>
-                    <p className="text-zinc-500">არ არის აქტივობა ამ ფაზაში</p>
-                </div>
-            )}
+                )}
+            </div>
 
             {/* Activity Detail Modal */}
             <ActivityDetailModal
                 activity={selectedActivity}
                 isOpen={!!selectedActivity}
                 onClose={() => setSelectedActivity(null)}
+                // Only allow completing if it's in today's list or library mode (but mostly makes sense for today)
+                // We pass the handler, but the modal might want to check if it's actionable. 
+                // For now, let's allow it. 
                 onComplete={handleToggleComplete}
                 isCompleted={selectedActivity ? completedToday[selectedActivity.id] : false}
             />

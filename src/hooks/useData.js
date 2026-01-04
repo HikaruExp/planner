@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from './useAuth'
 
 // Base schedule - ყოველდღიური (ყველა დღე)
-const BASE_SCHEDULE = [
+export const BASE_SCHEDULE = [
     { id: 'm1', time: '08:30', task: 'გაღვიძება', phase: 'დილა', detail: '1 ჭიქა წყალი', type: 'Water', enabled: true, days: 'all' },
     { id: 'm2', time: '08:45', task: 'საუზმე', phase: 'დილა', detail: 'Serious Mass (1 კოვზი + 500 მლ რძე)', type: 'Utensils', enabled: true, days: 'all' },
     { id: 'm3', time: '09:00', task: 'დანამატები', phase: 'დილა', detail: 'ომეგა-3 (1 კაფსულა) + კოლაგენი', type: 'Zap', enabled: true, days: 'all' },
@@ -19,7 +19,7 @@ const BASE_SCHEDULE = [
 ]
 
 // Sunday specific schedule - მხოლოდ აუცილებელი
-const SUNDAY_SCHEDULE = [
+export const SUNDAY_SCHEDULE = [
     { id: 'sun1', time: '09:30', task: 'გვიან გაღვიძება', phase: 'დილა', detail: 'დასვენების დღე - დაიძინე მეტი!', type: 'Water', enabled: true },
     { id: 'sun2', time: '10:00', task: 'საუზმე', phase: 'დილა', detail: 'მშვიდი საუზმე ოჯახთან', type: 'Utensils', enabled: true },
     { id: 'sun3', time: '10:30', task: 'დანამატები', phase: 'დილა', detail: 'ომეგა-3 + კოლაგენი', type: 'Zap', enabled: true },
@@ -32,7 +32,7 @@ const SUNDAY_SCHEDULE = [
 ]
 
 // Saturday specific schedule - ოჯახური
-const SATURDAY_SCHEDULE = [
+export const SATURDAY_SCHEDULE = [
     { id: 'sat1', time: '09:00', task: 'გაღვიძება', phase: 'დილა', detail: '1 ჭიქა წყალი', type: 'Water', enabled: true },
     { id: 'sat2', time: '09:30', task: 'საუზმე', phase: 'დილა', detail: 'Serious Mass + ომეგა-3', type: 'Utensils', enabled: true },
     { id: 'sat3', time: '11:00', task: 'ოჯახური სეირნობა', phase: 'დღე', detail: 'მინიმუმ 5000 ნაბიჯი 🚶‍♂️', type: 'Dumbbell', enabled: true },
