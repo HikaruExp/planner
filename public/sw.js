@@ -1,4 +1,4 @@
-const CACHE_NAME = 'planner-v1';
+const CACHE_NAME = 'planner-v2-timestamp-' + new Date().getTime();
 const urlsToCache = [
     '/',
     '/index.html',
