@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Georgian:wght@100..900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-deep: #050507;
+  --card-bg: rgba(255, 255, 255, 0.04);
+  --accent-cyan: #22d3ee;
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans Georgian', sans-serif;
+  background-color: var(--bg-deep);
+  color: #ffffff;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  min-height: 100dvh;
+  padding-top: var(--safe-area-inset-top);
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+/* Glass morphism */
+.glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Neo shadow */
+.neo-shadow {
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+}
+
+/* Phase indicator */
+.phase-indicator {
+  font-size: 10px;
+  font-weight: 900;
+  padding: 2px 10px;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+}
+
+/* Touch friendly buttons - 44pt minimum */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Scrollbar hiding */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Pull to refresh indicator */
+.ptr-loading {
+  transform: rotate(0deg);
+  animation: ptr-spin 1s linear infinite;
+}
+
+@keyframes ptr-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Calendar day cell */
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.calendar-day:active {
+  transform: scale(0.95);
+}
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  height: 200px;
+  width: 100%;
+}
+
+/* Streak flame animation */
+@keyframes flame {
+  0%, 100% { transform: scaleY(1) translateY(0); }
+  50% { transform: scaleY(1.1) translateY(-2px); }
+}
+
+.streak-flame {
+  animation: flame 0.5s ease-in-out infinite;
+}
+
+/* Holiday mode gradient */
+.holiday-gradient {
+  background: linear-gradient(135deg, #f97316 0%, #eab308 50%, #22c55e 100%);
+}
+
+/* Swimming gradient */
+.swimming-gradient {
+  background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%);
+}
