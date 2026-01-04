@@ -6,14 +6,12 @@ const LoginScreen = () => {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
-    const [useEmail, setUseEmail] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
 
-        // If using email login, send email; otherwise use demo mode
-        await signIn(useEmail ? email : '', password)
+        await signIn(email, password)
 
         setLoading(false)
     }
@@ -40,43 +38,21 @@ const LoginScreen = () => {
             {/* Login Form */}
             <form onSubmit={handleSubmit} className="w-full max-w-sm">
                 <div className="glass rounded-3xl p-8 neo-shadow">
-                    {/* Login Type Toggle */}
-                    <div className="flex gap-2 mb-6">
-                        <button
-                            type="button"
-                            onClick={() => setUseEmail(false)}
-                            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${!useEmail ? 'bg-cyan-500 text-white' : 'bg-white/5 text-zinc-400'
-                                }`}
-                        >
-                            დემო
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setUseEmail(true)}
-                            className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${useEmail ? 'bg-cyan-500 text-white' : 'bg-white/5 text-zinc-400'
-                                }`}
-                        >
+                    {/* Email Input */}
+                    <div className="mb-4">
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-3">
                             ელ-ფოსტა
-                        </button>
+                        </label>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="user@example.com"
+                            className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 transition-all text-lg font-medium"
+                            autoComplete="email"
+                            required
+                        />
                     </div>
-
-                    {/* Email Input (only for Supabase auth) */}
-                    {useEmail && (
-                        <div className="mb-4">
-                            <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-3">
-                                ელ-ფოსტა
-                            </label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="user@example.com"
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 transition-all text-lg font-medium"
-                                autoComplete="email"
-                                required={useEmail}
-                            />
-                        </div>
-                    )}
 
                     <div className="mb-6">
                         <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-3">
@@ -86,7 +62,7 @@ const LoginScreen = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            placeholder={useEmail ? 'შეიყვანე პაროლი' : 'planner2024'}
+                            placeholder="შეიყვანე პაროლი"
                             className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white placeholder-zinc-600 focus:outline-none focus:border-cyan-500/50 focus:ring-2 focus:ring-cyan-500/20 transition-all text-lg font-medium"
                             autoComplete="current-password"
                             required
@@ -101,7 +77,7 @@ const LoginScreen = () => {
 
                     <button
                         type="submit"
-                        disabled={loading || !password || (useEmail && !email)}
+                        disabled={loading || !password || !email}
                         className="w-full touch-target bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold py-4 px-6 rounded-2xl transition-all duration-300 disabled:opacity-50 disabled:scale-100 active:scale-95 shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/40"
                     >
                         {loading ? (
@@ -118,17 +94,9 @@ const LoginScreen = () => {
                     </button>
                 </div>
 
-                {!useEmail && (
-                    <p className="text-center text-zinc-600 text-xs mt-6">
-                        დემო რეჟიმი • პაროლი: <span className="text-cyan-500 font-mono">planner2024</span>
-                    </p>
-                )}
-
-                {useEmail && (
-                    <p className="text-center text-zinc-600 text-xs mt-6">
-                        Supabase ანგარიში • რეგისტრაცია Dashboard-ზე
-                    </p>
-                )}
+                <p className="text-center text-zinc-600 text-xs mt-6">
+                    Supabase ანგარიში საჭიროა შესასვლელად
+                </p>
             </form>
         </div>
     )
