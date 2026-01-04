@@ -1,12 +1,14 @@
 import { useState, useMemo } from 'react'
 import Icons from './Icons'
 import { useData, BASE_SCHEDULE, SUNDAY_SCHEDULE, SATURDAY_SCHEDULE } from '../hooks/useData'
-import { ACTIVITY_DETAILS } from '../data/exercises'
+import { ACTIVITY_DETAILS, WORKOUT_PLANS } from '../data/exercises'
 import ActivityDetailModal from './ActivityDetailModal'
+import WorkoutDetailModal from './WorkoutDetailModal'
 
 const ActivityLibrary = () => {
     const { activities: todayActivities, completedToday, toggleComplete } = useData()
     const [selectedActivity, setSelectedActivity] = useState(null)
+    const [selectedWorkoutId, setSelectedWorkoutId] = useState(null)
     const [filter, setFilter] = useState('all')
     const [viewMode, setViewMode] = useState('today') // 'today' or 'library'
 
@@ -21,10 +23,6 @@ const ActivityLibrary = () => {
 
     // Memoize all activities for Library mode
     const allActivities = useMemo(() => {
-        // Combine all schedules
-        // We want to show unique activities. 
-        // Sunday and Saturday have specific IDs (sun1, sat1). Base has m1, w1 etc.
-        // So we can just concatenate.
         return [...BASE_SCHEDULE, ...SATURDAY_SCHEDULE, ...SUNDAY_SCHEDULE]
     }, [])
 
@@ -47,14 +45,14 @@ const ActivityLibrary = () => {
     }
 
     const handleToggleComplete = (id) => {
-        // Only allow toggling completion for TODAY's activities
-        // In library view, we might not want to toggle today's completion if it's not in today's list?
-        // Actually, if the ID matches something in today's completion list, why not showing it?
-        // But for simplicity, let's allow it if it's in today's list. 
-        // Ideally, user manages completion in "Today" view. 
-        // But let's allow it here too for convenience if the activity is valid for today.
         toggleComplete(id)
     }
+
+    // Workout Plans List (for 'workouts' filter)
+    const workoutPlansList = Object.entries(WORKOUT_PLANS).map(([id, plan]) => ({
+        id,
+        ...plan
+    })).filter(w => w && w.title) // Filter out nulls (rest days)
 
     return (
         <div className="animate-fade-in space-y-6">
@@ -79,7 +77,7 @@ const ActivityLibrary = () => {
                 {/* View Toggles */}
                 <div className="bg-white/5 p-1 rounded-2xl flex gap-1">
                     <button
-                        onClick={() => setViewMode('today')}
+                        onClick={() => { setViewMode('today'); setFilter('all'); }}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'today'
                                 ? 'bg-zinc-800 text-white shadow-lg'
                                 : 'text-zinc-500 hover:text-zinc-300'
@@ -88,7 +86,7 @@ const ActivityLibrary = () => {
                         დღეს
                     </button>
                     <button
-                        onClick={() => setViewMode('library')}
+                        onClick={() => { setViewMode('library'); setFilter('all'); }}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${viewMode === 'library'
                                 ? 'bg-zinc-800 text-white shadow-lg'
                                 : 'text-zinc-500 hover:text-zinc-300'
@@ -96,84 +94,122 @@ const ActivityLibrary = () => {
                     >
                         ყველა
                     </button>
+                    <button
+                        onClick={() => { setViewMode('library'); setFilter('workouts'); }}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all ${filter === 'workouts'
+                                ? 'bg-cyan-600 text-white shadow-lg'
+                                : 'text-zinc-500 hover:text-zinc-300'
+                            }`}
+                    >
+                        ვარჯიშები
+                    </button>
                 </div>
             </header>
 
-            {/* Phase Filter */}
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
-                <button
-                    onClick={() => setFilter('all')}
-                    className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all ${filter === 'all'
-                            ? 'bg-cyan-500 text-white'
-                            : 'bg-white/5 text-zinc-400'
-                        }`}
-                >
-                    ყველა
-                </button>
-                {phases.map(phase => {
-                    const count = currentList.filter(a => a.phase === phase).length
-                    if (count === 0) return null
-                    return (
-                        <button
-                            key={phase}
-                            onClick={() => setFilter(phase)}
-                            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all ${filter === phase
-                                    ? 'bg-cyan-500 text-white'
-                                    : 'bg-white/5 text-zinc-400'
-                                }`}
-                        >
-                            {phase} ({count})
-                        </button>
-                    )
-                })}
-            </div>
+            {/* Phase Filter (Only show if NOT in workouts mode) */}
+            {filter !== 'workouts' && (
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-hide">
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all ${filter === 'all'
+                                ? 'bg-cyan-500 text-white'
+                                : 'bg-white/5 text-zinc-400'
+                            }`}
+                    >
+                        ყველა
+                    </button>
+                    {phases.map(phase => {
+                        const count = currentList.filter(a => a.phase === phase).length
+                        if (count === 0) return null
+                        return (
+                            <button
+                                key={phase}
+                                onClick={() => setFilter(phase)}
+                                className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all ${filter === phase
+                                        ? 'bg-cyan-500 text-white'
+                                        : 'bg-white/5 text-zinc-400'
+                                    }`}
+                            >
+                                {phase} ({count})
+                            </button>
+                        )
+                    })}
+                </div>
+            )}
 
-            {/* Activities List */}
+            {/* Content List */}
             <div className="space-y-3">
-                {activitiesWithDetails.map(activity => {
-                    const isCompleted = completedToday[activity.id]
-
-                    return (
+                {filter === 'workouts' ? (
+                    // Workouts List
+                    workoutPlansList.map(plan => (
                         <div
-                            key={activity.id}
-                            onClick={() => handleActivityClick(activity)}
-                            className={`glass p-4 rounded-2xl flex items-center gap-4 cursor-pointer transition-all active:scale-[0.98] ${isCompleted && viewMode === 'today' ? 'opacity-50' : 'hover:bg-white/[0.06]'
-                                }`}
+                            key={plan.id}
+                            onClick={() => setSelectedWorkoutId(plan.id)}
+                            className="glass p-5 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-white/[0.06] active:scale-[0.98] transition-all border-cyan-500/20"
                         >
-                            {/* Icon */}
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isCompleted
-                                    ? 'bg-emerald-500 text-white'
-                                    : 'bg-white/5 text-zinc-400'
-                                }`}>
-                                {isCompleted ? <Icons.Check /> : getIcon(activity.type)}
+                            <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                                {plan.id === 'swimming' ? <Icons.Swim /> : <Icons.Dumbbell />}
                             </div>
-
-                            {/* Info */}
-                            <div className="flex-1 min-w-0">
-                                <div className="flex justify-between items-center mb-1">
-                                    <h3 className={`font-bold ${isCompleted && viewMode === 'today' ? 'line-through text-zinc-500' : 'text-white'}`}>
-                                        {activity.task}
-                                    </h3>
-                                    <span className="text-xs font-bold text-zinc-600 ml-2">{activity.time}</span>
-                                </div>
-                                <p className="text-xs text-zinc-500 truncate">{activity.detail}</p>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-white text-lg">{plan.title}</h3>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className="phase-indicator text-[10px]">{activity.phase}</span>
-                                    {activity.hasDetails && (
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
-                                            დეტალები
-                                        </span>
-                                    )}
+                                    <span className="text-xs font-bold bg-cyan-500/10 text-cyan-400 px-2 py-0.5 rounded-md">
+                                        {plan.exercises ? plan.exercises.length + ' ვარჯიში' : 'კარდიო'}
+                                    </span>
+                                    <span className="text-[10px] text-zinc-500">დააჭირე დეტალებისთვის</span>
                                 </div>
                             </div>
-
-                            {/* Arrow */}
-                            <Icons.ChevronRight size={16} className="text-zinc-700 flex-shrink-0" />
+                            <Icons.ChevronRight size={20} className="text-zinc-600" />
                         </div>
-                    )
-                })}
+                    ))
+                ) : (
+                    // Regular Activities List
+                    activitiesWithDetails.map(activity => {
+                        const isCompleted = completedToday[activity.id]
 
-                {filteredActivities.length === 0 && (
+                        return (
+                            <div
+                                key={activity.id}
+                                onClick={() => handleActivityClick(activity)}
+                                className={`glass p-4 rounded-2xl flex items-center gap-4 cursor-pointer transition-all active:scale-[0.98] ${isCompleted && viewMode === 'today' ? 'opacity-50' : 'hover:bg-white/[0.06]'
+                                    }`}
+                            >
+                                {/* Icon */}
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${isCompleted
+                                        ? 'bg-emerald-500 text-white'
+                                        : 'bg-white/5 text-zinc-400'
+                                    }`}>
+                                    {isCompleted ? <Icons.Check /> : getIcon(activity.type)}
+                                </div>
+
+                                {/* Info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex justify-between items-center mb-1">
+                                        <h3 className={`font-bold ${isCompleted && viewMode === 'today' ? 'line-through text-zinc-500' : 'text-white'}`}>
+                                            {activity.task}
+                                        </h3>
+                                        <span className="text-xs font-bold text-zinc-600 ml-2">{activity.time}</span>
+                                    </div>
+                                    <p className="text-xs text-zinc-500 truncate">{activity.detail}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="phase-indicator text-[10px]">{activity.phase}</span>
+                                        {activity.hasDetails && (
+                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400">
+                                                დეტალები
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Arrow */}
+                                <Icons.ChevronRight size={16} className="text-zinc-700 flex-shrink-0" />
+                            </div>
+                        )
+                    })
+                )}
+
+                {/* Empty State */}
+                {filter !== 'workouts' && filteredActivities.length === 0 && (
                     <div className="text-center py-12">
                         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/5 flex items-center justify-center">
                             <Icons.Calendar size={32} className="text-zinc-600" />
@@ -188,11 +224,15 @@ const ActivityLibrary = () => {
                 activity={selectedActivity}
                 isOpen={!!selectedActivity}
                 onClose={() => setSelectedActivity(null)}
-                // Only allow completing if it's in today's list or library mode (but mostly makes sense for today)
-                // We pass the handler, but the modal might want to check if it's actionable. 
-                // For now, let's allow it. 
                 onComplete={handleToggleComplete}
                 isCompleted={selectedActivity ? completedToday[selectedActivity.id] : false}
+            />
+
+            {/* Workout Detail Modal */}
+            <WorkoutDetailModal
+                isOpen={!!selectedWorkoutId}
+                onClose={() => setSelectedWorkoutId(null)}
+                workoutId={selectedWorkoutId}
             />
         </div>
     )

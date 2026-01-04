@@ -143,13 +143,13 @@ const ExerciseDetailView = ({ exercise, onBack }) => {
     )
 }
 
-const WorkoutDetailModal = ({ isOpen, onClose, dayName }) => {
+const WorkoutDetailModal = ({ isOpen, onClose, dayName, workoutId }) => {
     const [selectedExercise, setSelectedExercise] = useState(null)
 
     if (!isOpen) return null
 
-    // Get workout type for this day
-    const workoutType = WORKOUT_SCHEDULE[dayName]
+    // Get workout type: either explicitly passed or from schedule
+    const workoutType = workoutId || WORKOUT_SCHEDULE[dayName]
     const workoutPlan = workoutType ? WORKOUT_PLANS[workoutType] : null
 
     // Special cases: swimming, rest, walking
